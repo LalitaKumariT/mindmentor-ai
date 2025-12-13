@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: mindmentor-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mindmentor
+    username: myuser
+    password: mypassword
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+server:
+  port: 8080
+
+security:
+  jwt:
+    secret: "c2Vlbm1hc3Rlcm5hdGl2ZWNvcm5iaXJ0aG1ldGFscGVuY2lsZnVuZm91Z2h0aHVudGU="
+    expiration-minutes: 60
+
+logging:
+  level:
+    org.springframework.security: INFO
