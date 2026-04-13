@@ -2,16 +2,20 @@ spring:
   application:
     name: mindmentor-api
   datasource:
-    url: jdbc:postgresql://localhost:5432/mindmentor
-    username: myuser
-    password: mypassword
+    url: jdbc:h2:mem:mindmentor
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate:
         format_sql: true
     show-sql: true
+  h2:
+    console:
+      enabled: true
 
 server:
   port: 8080

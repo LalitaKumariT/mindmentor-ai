@@ -1,31 +1,136 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiPlus, FiCalendar, FiClock, FiCheckCircle, FiList } from 'react-icons/fi';
+import { FiPlus, FiCalendar, FiClock, FiCheckCircle, FiList, FiPlay, FiPause, FiRotateCw } from 'react-icons/fi';
+
+interface Task {
+  id: number;
+  text: string;
+  description: string;
+  completed: boolean;
+  priority: 'low' | 'medium' | 'high';
+  dueDate: string;
+  startTime?: string;
+  endTime?: string;
+  duration?: number; // in minutes
+}
 
 const PlannerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('today');
   const [showAddTask, setShowAddTask] = useState(false);
-  const [newTask, setNewTask] = useState('');
-  const [tasks, setTasks] = useState([
-    { id: 1, text: 'Complete React components', completed: false, priority: 'high', due: 'Today, 2:00 PM' },
-    { id: 2, text: 'Review project documentation', completed: true, priority: 'medium', due: 'Today, 3:30 PM' },
-    { id: 3, text: 'Team standup meeting', completed: false, priority: 'high', due: 'Tomorrow, 10:00 AM' },
+  const [newTask, setNewTask] = useState<Omit<Task, 'id' | 'completed'>>({ 
+    text: '',
+    description: '',
+    priority: 'medium',
+    dueDate: new Date().toISOString().split('T')[0],
+    startTime: '',
+    endTime: '',
+    duration: 25
+  });
+  
+  // Timer state
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // in seconds
+  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  const [activeTaskId, setActiveTaskId] = useState<number | null>(null);
+
+  const [tasks, setTasks] = useState<Task[]>([
+    { 
+      id: 1, 
+      text: 'Complete React components', 
+      description: 'Finish building the dashboard components',
+      completed: false, 
+      priority: 'high', 
+      dueDate: new Date().toISOString().split('T')[0],
+      startTime: '14:00',
+      endTime: '15:00',
+      duration: 60
+    },
+    { 
+      id: 2, 
+      text: 'Review project documentation', 
+      description: 'Go through the API documentation',
+      completed: true, 
+      priority: 'medium', 
+      dueDate: new Date().toISOString().split('T')[0],
+      startTime: '15:30',
+      endTime: '16:00',
+      duration: 30
+    },
   ]);
+
+  // Timer functions
+  const toggleTimer = (taskId?: number) => {
+    if (taskId !== undefined) {
+      setActiveTaskId(taskId === activeTaskId ? null : taskId);
+    }
+    setIsTimerRunning(!isTimerRunning);
+  };
+
+  const resetTimer = () => {
+    if (timerInterval) clearInterval(timerInterval);
+    setTimeLeft(newTask.duration ? newTask.duration * 60 : 25 * 60);
+    setIsTimerRunning(false);
+  };
+
+  // Handle timer logic
+  useEffect(() => {
+    if (isTimerRunning && timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setIsTimerRunning(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      setTimerInterval(timer);
+    } else if (!isTimerRunning && timerInterval) {
+      clearInterval(timerInterval);
+    }
+
+    return () => {
+      if (timerInterval) clearInterval(timerInterval);
+    };
+  }, [isTimerRunning, timeLeft]);
 
   const addTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTask.trim()) return;
+    if (!newTask.text.trim()) return;
     
-    const newTaskItem = {
+    // Calculate duration in minutes if start and end times are provided
+    let duration = newTask.duration;
+    if (newTask.startTime && newTask.endTime) {
+      const [startHour, startMinute] = newTask.startTime.split(':').map(Number);
+      const [endHour, endMinute] = newTask.endTime.split(':').map(Number);
+      const startTotal = startHour * 60 + startMinute;
+      const endTotal = endHour * 60 + endMinute;
+      duration = (endTotal - startTotal + 1440) % 1440; // Handle midnight wrap-around
+    }
+
+    const newTaskItem: Task = {
       id: Date.now(),
-      text: newTask,
+      text: newTask.text.trim(),
+      description: newTask.description.trim(),
       completed: false,
-      priority: 'medium',
-      due: 'Today, 6:00 PM'
+      priority: newTask.priority,
+      dueDate: newTask.dueDate,
+      startTime: newTask.startTime,
+      endTime: newTask.endTime,
+      duration
     };
     
     setTasks([...tasks, newTaskItem]);
-    setNewTask('');
+    setNewTask({ 
+      text: '',
+      description: '',
+      priority: 'medium',
+      dueDate: new Date().toISOString().split('T')[0],
+      startTime: '',
+      endTime: '',
+      duration: 25
+    });
     setShowAddTask(false);
   };
 
@@ -33,6 +138,31 @@ const PlannerPage: React.FC = () => {
     setTasks(tasks.map(task => 
       task.id === id ? { ...task, completed: !task.completed } : task
     ));
+  };
+
+  const formatTime = (dateStr: string, timeStr: string) => {
+    if (!dateStr || !timeStr) return '';
+    
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const date = new Date(dateStr);
+    date.setHours(hours, minutes);
+    
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+  
+  const formatDueDate = (dateStr: string) => {
+    const today = new Date().toDateString();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const taskDate = new Date(dateStr).toDateString();
+    
+    if (today === taskDate) return 'Today';
+    if (tomorrow.toDateString() === taskDate) return 'Tomorrow';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const getPriorityColor = (priority: string) => {
@@ -87,14 +217,139 @@ const PlannerPage: React.FC = () => {
             <div>
               <input
                 type="text"
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                placeholder="What needs to be done?"
+                value={newTask.text}
+                onChange={(e) => setNewTask({...newTask, text: e.target.value})}
+                placeholder="Task title"
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 autoFocus
+                required
               />
             </div>
-            <div className="flex justify-end space-x-3">
+            
+            <div>
+              <textarea
+                value={newTask.description}
+                onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                placeholder="Task description"
+                rows={2}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+            
+            {/* Time Settings */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Due Date
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={newTask.dueDate}
+                    onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  <FiCalendar className="absolute left-3 top-3 text-gray-400" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Priority
+                </label>
+                <select
+                  value={newTask.priority}
+                  onChange={(e) => setNewTask({...newTask, priority: e.target.value as 'low' | 'medium' | 'high'})}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Start Time
+                </label>
+                <div className="relative">
+                  <input
+                    type="time"
+                    value={newTask.startTime}
+                    onChange={(e) => setNewTask({...newTask, startTime: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  <FiClock className="absolute right-3 top-3 text-gray-400" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  End Time
+                </label>
+                <div className="relative">
+                  <input
+                    type="time"
+                    value={newTask.endTime}
+                    onChange={(e) => setNewTask({...newTask, endTime: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                  <FiClock className="absolute right-3 top-3 text-gray-400" />
+                </div>
+              </div>
+            </div>
+            
+            {/* Pomodoro Timer */}
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Pomodoro Timer</h3>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleTimer()}
+                    className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors"
+                  >
+                    {isTimerRunning ? <FiPause size={16} /> : <FiPlay size={16} />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetTimer}
+                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                  >
+                    <FiRotateCw size={16} />
+                  </button>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                  {String(Math.floor(timeLeft / 60)).padStart(2, '0')}:{String(timeLeft % 60).padStart(2, '0')}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {isTimerRunning ? 'Time remaining' : 'Ready to start'}
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {[15, 25, 45].map((mins) => (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() => {
+                      setNewTask(prev => ({ ...prev, duration: mins }));
+                      setTimeLeft(mins * 60);
+                    }}
+                    className={`text-xs py-1 px-2 rounded ${
+                      newTask.duration === mins
+                        ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300'
+                        : 'bg-gray-100 dark:bg-gray-600/50 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500/50'
+                    }`}
+                  >
+                    {mins} min
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-2">
               <button
                 type="button"
                 onClick={() => setShowAddTask(false)}
@@ -104,8 +359,9 @@ const PlannerPage: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 flex items-center"
               >
+                <FiPlus className="mr-1.5" />
                 Add Task
               </button>
             </div>
@@ -140,19 +396,54 @@ const PlannerPage: React.FC = () => {
                 {task.completed && <FiCheckCircle className="w-3.5 h-3.5 text-white" />}
               </button>
               <div className="ml-3 flex-1">
-                <p className={`text-sm font-medium ${
-                  task.completed 
-                    ? 'line-through text-gray-400 dark:text-gray-500' 
-                    : 'text-gray-900 dark:text-white'
-                }`}>
-                  {task.text}
-                </p>
-                <div className="flex items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  <FiClock className="mr-1" />
-                  <span>{task.due}</span>
-                  <span className={`ml-3 px-2 py-0.5 rounded-full text-xs ${getPriorityColor(task.priority)}`}>
-                    {task.priority} priority
-                  </span>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${
+                      task.completed 
+                        ? 'line-through text-gray-400 dark:text-gray-500' 
+                        : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {task.text}
+                    </p>
+                    {task.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {task.description}
+                      </p>
+                    )}
+                    <div className="flex items-center mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      <FiClock className="mr-1 flex-shrink-0" />
+                      <span className="whitespace-nowrap">
+                        {formatDueDate(task.dueDate)}
+                        {task.startTime && `, ${formatTime(task.dueDate, task.startTime)}`}
+                        {task.endTime && ` - ${formatTime(task.dueDate, task.endTime)}`}
+                      </span>
+                      <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${getPriorityColor(task.priority)}`}>
+                        {task.priority} priority
+                      </span>
+                      {task.duration && (
+                        <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                          {Math.floor(task.duration / 60)}h {task.duration % 60}m
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {activeTaskId === task.id && (
+                    <div className="flex items-center ml-2">
+                      <div className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                        {String(Math.floor(timeLeft / 60)).padStart(2, '0')}:
+                        {String(timeLeft % 60).padStart(2, '0')}
+                      </div>
+                      <button 
+                        onClick={() => toggleTimer(task.id)}
+                        className="ml-2 p-1.5 text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/30 rounded-full"
+                      >
+                        {isTimerRunning && activeTaskId === task.id ? 
+                          <FiPause size={16} /> : 
+                          <FiPlay size={16} />
+                        }
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex space-x-2">

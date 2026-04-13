@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, FC } from 'react';
+import React, { useState, useCallback, useRef, FC, useEffect } from 'react';
 
 interface Ripple {
   id: number;
@@ -12,10 +12,40 @@ interface UseRippleEffectReturn {
   RippleEffect: FC;
 }
 
+// Add the ripple animation styles to the document head
+const addRippleStyles = () => {
+  if (typeof document === 'undefined') return;
+  
+  const styleId = 'ripple-effect-styles';
+  if (document.getElementById(styleId)) return;
+
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.textContent = `
+    @keyframes ripple {
+      to {
+        transform: translate(-50%, -50%) scale(4);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+};
+
 export const useRippleEffect = (): UseRippleEffectReturn => {
   const [ripples, setRipples] = useState<Ripple[]>([]);
   const nextId = useRef(0);
   const cleanupRef = useRef<number | null>(null);
+
+  // Add the ripple styles when the component mounts
+  useEffect(() => {
+    addRippleStyles();
+    return () => {
+      if (cleanupRef.current) {
+        clearTimeout(cleanupRef.current);
+      }
+    };
+  }, []);
 
   const onClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
     const button = e.currentTarget;
@@ -46,27 +76,23 @@ export const useRippleEffect = (): UseRippleEffectReturn => {
 
   const RippleEffect: FC = useCallback(() => (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {ripples.map((rippleItem, index) => (
+      {ripples.map((rippleItem) => (
         <span
           key={rippleItem.id}
-          className="absolute bg-white/30 rounded-full transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
           style={{
+            position: 'absolute',
+            borderRadius: '50%',
+            transform: 'translate(-50%, -50%) scale(0)',
+            pointerEvents: 'none',
             left: `${rippleItem.x}px`,
             top: `${rippleItem.y}px`,
             width: `${rippleItem.size}px`,
             height: `${rippleItem.size}px`,
+            background: 'rgba(255, 255, 255, 0.7)',
             animation: 'ripple 600ms linear',
           }}
         />
       ))}
-      <style jsx>{`
-        @keyframes ripple {
-          to {
-            transform: translate(-50%, -50%) scale(4);
-            opacity: 0;
-          }
-        }
-      `}</style>
     </div>
   ), [ripples]);
 

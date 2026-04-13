@@ -210,176 +210,97 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <header className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-32">
-        {/* Animated background elements */}
+      <section className="relative bg-gradient-to-b from-gray-900 to-gray-800 pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
+        {/* Background elements */}
         <div className="absolute inset-0 -z-10">
-          <motion.div 
-            className="absolute top-1/4 -left-4 w-72 h-72 bg-purple-600/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob"
-            animate={{
-              y: [0, -20, 0],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              repeatType: 'reverse',
-              ease: 'easeInOut'
-            }}
-          />
-          <motion.div 
-            className="absolute top-1/3 -right-4 w-72 h-72 bg-blue-600/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"
-            animate={{
-              y: [0, 15, 0],
-            }}
-            transition={{
-              duration: 10,
-              delay: 2,
-              repeat: Infinity,
-              repeatType: 'reverse',
-              ease: 'easeInOut'
-            }}
-          />
-          <motion.div 
-            className="absolute -bottom-8 left-1/2 w-72 h-72 bg-purple-400/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"
-            animate={{
-              y: [0, -25, 0],
-            }}
-            transition={{
-              duration: 12,
-              delay: 1,
-              repeat: Infinity,
-              repeatType: 'reverse',
-              ease: 'easeInOut'
-            }}
-          />
+          <div className="absolute top-1/4 -left-4 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+          <div className="absolute top-1/3 -right-4 w-96 h-96 bg-blue-600/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-96 h-96 bg-indigo-600/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
         </div>
         
         <motion.div 
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10"
           variants={container}
           initial="hidden"
-          animate="show"
+          animate="visible"
         >
-          <motion.div className="text-center">
-            <motion.div 
-              className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-white/10 text-purple-300 mb-6 border border-white/10 backdrop-blur-sm"
-              variants={item}
+          <motion.div 
+            className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-white/10 text-purple-300 mb-6 border border-white/10 backdrop-blur-sm"
+            variants={item}
+          >
+            <span className="flex h-2 w-2 mr-2 rounded-full bg-purple-400 animate-pulse"></span>
+            Now with AI-powered insights
+          </motion.div>
+          
+          <motion.h1 
+            className="text-4xl md:text-6xl font-bold text-white mb-6"
+            variants={item}
+          >
+            <span className="block">Smarter Learning,</span>
+            <span className="block bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+              Better Results
+            </span>
+          </motion.h1>
+          
+          <motion.p 
+            className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-10"
+            variants={item}
+          >
+            Transform your study habits with AI-powered planning, focus tools, and performance analytics.
+            <span className="block mt-2">Achieve more in less time with personalized learning strategies.</span>
+          </motion.p>
+          
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+            variants={item}
+          >
+            <button 
+              onClick={(e) => {
+                rippleClick(e);
+                navigate('/signup');
+              }}
+              className="relative overflow-hidden px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-0.5 transition-all duration-300 group"
             >
-              <span className="flex h-2 w-2 mr-2 rounded-full bg-purple-400 animate-pulse"></span>
-              Now with AI-powered insights
-            </motion.div>
-            <motion.h1 
-              className="text-4xl md:text-6xl font-bold mb-6"
-              variants={item}
+              <RippleEffect />
+              <span className="relative z-10">Get Started Free</span>
+            </button>
+            <button 
+              onClick={(e) => {
+                rippleClick(e);
+                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="relative overflow-hidden px-8 py-4 bg-white text-gray-700 font-medium rounded-full border border-gray-200 hover:bg-gray-50 transition-all duration-300 group"
             >
-              <motion.span 
-                className="block"
-                animate={{
-                  y: [0, -8, 0],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  repeatType: 'reverse',
-                  ease: 'easeInOut'
-                }}
-              >
-                Smarter Learning,
-              </motion.span>
-              <motion.span 
-                className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500"
-                animate={{
-                  y: [0, 8, 0],
-                }}
-                transition={{
-                  duration: 6,
-                  delay: 0.5,
-                  repeat: Infinity,
-                  repeatType: 'reverse',
-                  ease: 'easeInOut'
-                }}
-              >
-                Better Results
-              </motion.span>
-            </motion.h1>
-            <motion.p 
-              className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-10"
-              variants={item}
-            >
-              Transform your study habits with AI-powered planning, focus tools, and performance analytics.
-              <span className="block mt-2">Achieve more in less time with personalized learning strategies.</span>
-            </motion.p>
-            <motion.div 
-              className="flex flex-col sm:flex-row justify-center gap-4"
-              variants={item}
-            >
-              <motion.button 
-                onClick={(e) => {
-                  rippleClick(e);
-                  navigate('/signup');
-                }}
-                className="relative overflow-hidden px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-0.5 transition-all duration-300 group"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <RippleEffect />
-                <motion.span 
-                  className="relative z-10 flex items-center justify-center gap-2"
-                  animate={{
-                    y: [0, -2, 0],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    repeatType: 'reverse',
-                    ease: 'easeInOut'
-                  }}
-                >
-                  Get Started Free
-                </motion.span>
-              </motion.button>
-              <motion.button 
-                onClick={(e) => {
-                  rippleClick(e);
-                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="relative overflow-hidden px-8 py-3.5 bg-white/10 text-white font-semibold rounded-lg border-2 border-white/20 hover:border-purple-400/50 hover:bg-white/15 transition-all duration-300 group"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <RippleEffect />
-                <motion.span 
-                  className="relative z-10 flex items-center justify-center gap-2"
-                  animate={{
-                    y: [0, -2, 0],
-                  }}
-                  transition={{
-                    duration: 4,
-                    delay: 0.3,
-                    repeat: Infinity,
-                    repeatType: 'reverse',
-                    ease: 'easeInOut'
-                  }}
-                >
-                  View Features
-                  <svg 
-                    className="w-4 h-4" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M19 14l-7 7m0 0l-7-7m7 7V3" 
-                    />
-                  </svg>
-                </motion.span>
-              </motion.button>
-            </motion.div>
+              <RippleEffect />
+              <span className="relative z-10">Learn More</span>
+            </button>
+          </motion.div>
+          
+          <motion.div 
+            className="mt-16 relative"
+            variants={item}
+          >
+            <div className="relative max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-gray-100">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-sm"></div>
+              <div className="relative p-1 bg-white">
+                <div className="h-8 flex items-center px-4">
+                  <div className="flex space-x-2">
+                    <span className="w-3 h-3 rounded-full bg-red-400"></span>
+                    <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
+                    <span className="w-3 h-3 rounded-full bg-green-400"></span>
+                  </div>
+                </div>
+                <div className="h-80 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                  <div className="text-center p-6 max-w-md mx-auto">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">Your AI Learning Assistant</h3>
+                    <p className="text-gray-600">Experience the future of personalized education</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
-      </header>
+      </section>
 
       {/* Features Section */}
       <section id="features" className="py-12 md:py-16 relative overflow-hidden">

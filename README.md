@@ -119,6 +119,69 @@ docker-compose up --build
 ## 🧪 API Documentation
 Swagger UI: http://localhost:8080/swagger-ui.html
 
+## 🧱 Environment Setup
+
+### Prerequisites
+- Docker & Docker Compose
+- Node.js 18+
+- Java 17+
+- Git
+
+### Local Development
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd mindmentor-ai
+   ```
+
+2. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+3. Start the application:
+   ```bash
+   docker-compose up --build
+   ```
+
+4. Access the application:
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:8080
+   - H2 Console: http://localhost:8080/h2-console
+
+## 🔒 Security & Deployment
+
+### Environment Variables
+- Never commit `.env` files to version control
+- Use strong, unique JWT secrets in production
+- Configure database credentials securely
+- Use HTTPS in production
+
+### Production Deployment
+1. **Backend Deployment**:
+   - Build the Docker image: `docker build -t mindmentor-backend ./backend`
+   - Deploy to your preferred cloud platform (AWS, Google Cloud, Azure)
+   - Configure production database (PostgreSQL recommended)
+   - Set up SSL certificates
+
+2. **Frontend Deployment**:
+   - Build for production: `cd frontend && npm run build`
+   - Deploy to Vercel, Netlify, or AWS S3
+   - Configure environment variables for production API URL
+
+3. **Database**:
+   - Use managed PostgreSQL service (Neon, AWS RDS, etc.)
+   - Configure connection pooling
+   - Set up automated backups
+
+### Security Best Practices
+- Enable CORS for your frontend domain
+- Use environment variables for all secrets
+- Implement rate limiting on API endpoints
+- Regular security updates for dependencies
+- Monitor for suspicious activity
+
 ## 🔮 Future Enhancements
 
 - Mobile app (React Native)

@@ -1,5 +1,7 @@
 package com.mindmentor.api.auth;
 
+import com.mindmentor.api.auth.User;
+import com.mindmentor.api.auth.UserRepository;
 import com.mindmentor.api.auth.dto.AuthResponse;
 import com.mindmentor.api.auth.dto.LoginRequest;
 import com.mindmentor.api.auth.dto.SignupRequest;
@@ -17,9 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, JwtService jwtService, UserRepository userRepository) {
         this.authService = authService;
+        this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/signup")
@@ -33,11 +39,20 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal User user) {
+    public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal org.springframework.security.core.userdetails.User userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        // Find the user from database to get user details
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElse(null);
+        
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
-        String token = null;
+        
+        String token = jwtService.generateToken(user);
         return ResponseEntity.ok(
                 new AuthResponse(token, user.getId(), user.getName(), user.getEmail(), user.getRole().name())
         );

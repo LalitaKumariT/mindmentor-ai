@@ -19,7 +19,7 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    terms: false
+    terms: true // Pre-checked by default
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -114,24 +114,29 @@ export default function SignupPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    const fieldValue = type === 'checkbox' ? checked : value;
+    const newValue = type === 'checkbox' ? checked : value;
     
     setFormData(prev => ({
       ...prev,
-      [name]: fieldValue
+      [name]: newValue
     }));
 
-    // Update password strength when password changes
-    if (name === 'password') {
-      setPasswordStrength(calculatePasswordStrength(value));
-    }
-
-    // Clear error when user starts typing
+    // Clear error when user types
     if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
+    }
+
+    // Clear duplicate email error when email changes
+    if (name === 'email' && error) {
+      setError('');
+    }
+
+    // Update password strength
+    if (name === 'password') {
+      setPasswordStrength(calculatePasswordStrength(value));
     }
   };
 
@@ -155,11 +160,19 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const { name, email, password } = formData;
-      await signup(name, email, password);
+      await signup(formData.name, formData.email, formData.password);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Signup failed. Please try again.');
+      console.error('Signup failed:', err);
+      if (err.response?.status === 409 || 
+          err.response?.data?.message?.toLowerCase().includes('email') || 
+          err.response?.data?.message?.toLowerCase().includes('already exists')) {
+        setError('This email is already registered. Please log in instead.');
+      } else if (err.response?.data?.message?.toLowerCase().includes('username')) {
+        setError('This username is already taken. Please choose a different one.');
+      } else {
+        setError('This email is already registered. Please log in instead.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -199,22 +212,27 @@ export default function SignupPage() {
             <div className="space-y-6">
               {/* Name Field */}
               <div className="relative">
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  className={`peer h-14 w-full px-4 pt-4 pb-2 bg-white/5 border ${errors.name ? 'border-red-500' : 'border-white/10'} rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200`}
-                  placeholder=" "  
-                  value={formData.name}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                />
-                <label 
-                  htmlFor="name" 
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none transition-all duration-200 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-400 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400"
-                >
-                  Full Name <span className="text-red-500">*</span>
-                </label>
+                <div className="relative">
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    className={`h-14 w-full px-4 pt-4 pb-2 bg-white/5 border ${errors.name ? 'border-red-500' : 'border-white/10'} rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200`}
+                    placeholder=" "  
+                    value={formData.name}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                  <label 
+                    htmlFor="name" 
+                    className={`absolute left-4 text-gray-400 pointer-events-none transition-all duration-200 
+                      ${formData.name || document.activeElement?.id === 'name' 
+                        ? 'top-2 text-xs text-purple-400' 
+                        : 'top-1/2 -translate-y-1/2 text-base text-gray-400'}`}
+                  >
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                </div>
                 {errors.name && (
                   <p className="mt-1 text-xs text-red-400">{errors.name}</p>
                 )}
@@ -222,23 +240,28 @@ export default function SignupPage() {
 
               {/* Email Field */}
               <div className="relative">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  className={`peer h-14 w-full px-4 pt-4 pb-2 bg-white/5 border ${errors.email ? 'border-red-500' : 'border-white/10'} rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200`}
-                  placeholder=" "
-                  value={formData.email}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                />
-                <label 
-                  htmlFor="email" 
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none transition-all duration-200 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-400 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400"
-                >
-                  Email Address <span className="text-red-500">*</span>
-                </label>
+                <div className="relative">
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    className={`h-14 w-full px-4 pt-4 pb-2 bg-white/5 border ${errors.email ? 'border-red-500' : 'border-white/10'} rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200`}
+                    placeholder=" "
+                    value={formData.email}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                  <label 
+                    htmlFor="email" 
+                    className={`absolute left-4 text-gray-400 pointer-events-none transition-all duration-200 
+                      ${formData.email || document.activeElement?.id === 'email' 
+                        ? 'top-2 text-xs text-purple-400' 
+                        : 'top-1/2 -translate-y-1/2 text-base text-gray-400'}`}
+                  >
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                </div>
                 {errors.email && (
                   <p className="mt-1 text-xs text-red-400">{errors.email}</p>
                 )}
@@ -260,7 +283,10 @@ export default function SignupPage() {
                   />
                   <label 
                     htmlFor="password" 
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none transition-all duration-200 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-400 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400"
+                    className={`absolute left-4 text-gray-400 pointer-events-none transition-all duration-200 
+                      ${formData.password || document.activeElement?.id === 'password' 
+                        ? 'top-2 text-xs text-purple-400' 
+                        : 'top-1/2 -translate-y-1/2 text-base text-gray-400'}`}
                   >
                     Password <span className="text-red-500">*</span>
                   </label>
@@ -300,7 +326,10 @@ export default function SignupPage() {
                   />
                   <label 
                     htmlFor="confirmPassword" 
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none transition-all duration-200 peer-focus:top-2 peer-focus:text-xs peer-focus:text-purple-400 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400"
+                    className={`absolute left-4 text-gray-400 pointer-events-none transition-all duration-200 
+                      ${formData.confirmPassword || document.activeElement?.id === 'confirmPassword' 
+                        ? 'top-2 text-xs text-purple-400' 
+                        : 'top-1/2 -translate-y-1/2 text-base text-gray-400'}`}
                   >
                     Confirm Password <span className="text-red-500">*</span>
                   </label>
@@ -351,18 +380,47 @@ export default function SignupPage() {
               <div className="pt-2">
                 <div className="flex items-start">
                   <div className="flex items-center h-5">
-                    <div className="relative">
+                    <div className="relative flex items-center">
                       <input
                         id="terms"
                         name="terms"
                         type="checkbox"
-                        className="sr-only peer"
+                        className="sr-only"
                         checked={formData.terms as boolean}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev,
+                            terms: isChecked
+                          }));
+                          // Clear error when user checks the box
+                          if (errors.terms) {
+                            setErrors(prev => ({
+                              ...prev,
+                              terms: ''
+                            }));
+                          }
+                        }}
                         onBlur={handleBlur}
                       />
-                      <div className="w-4 h-4 flex items-center justify-center rounded bg-white/5 border border-white/20 peer-checked:bg-purple-500 peer-checked:border-purple-500 peer-focus:ring-2 peer-focus:ring-purple-500/50 transition-colors">
-                        <CheckCircleIcon className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                      <div className={`w-5 h-5 flex items-center justify-center rounded border ${
+                        errors.terms ? 'border-red-500' : 'border-white/20'
+                      } ${
+                        formData.terms ? 'bg-purple-500 border-purple-500' : 'bg-white/5'
+                      } transition-colors`}>
+                        <svg 
+                          className={`w-3 h-3 text-white transition-opacity ${formData.terms ? 'opacity-100' : 'opacity-0'}`}
+                          fill="none" 
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={3} 
+                            d="M5 13l4 4L19 7" 
+                          />
+                        </svg>
                       </div>
                     </div>
                   </div>

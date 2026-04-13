@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useRippleEffect } from '../hooks/useRippleEffect';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +13,13 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { onClick: rippleClick, RippleEffect } = useRippleEffect();
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    var FormData: new (form?: HTMLFormElement | undefined, submitter?: HTMLElement | null | undefined) => FormData
+    
+  };
 
   // Page transition effect
   useEffect(() => {
@@ -58,7 +65,7 @@ export default function LoginPage() {
   };
 
   // Animation variants
-  const container = {
+  const container: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -69,7 +76,7 @@ export default function LoginPage() {
     },
   };
 
-  const item = {
+  const item: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: { 
       opacity: 1, 
@@ -82,7 +89,7 @@ export default function LoginPage() {
     },
   };
 
-  const errorItem = {
+  const errorItem: Variants = {
     hidden: { opacity: 0, y: -10 },
     show: { 
       opacity: 1, 
@@ -166,7 +173,7 @@ export default function LoginPage() {
                   className="peer h-14 w-full px-4 pt-4 pb-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                   placeholder=" "
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleChange}
                 />
                 <label 
                   htmlFor="email" 

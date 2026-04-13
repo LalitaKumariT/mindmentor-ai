@@ -28,12 +28,7 @@ public class AuthService {
             throw new IllegalArgumentException("Email already in use");
         }
 
-        User user = User.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
-                .build();
+        User user = new User(request.getName(), request.getEmail(), passwordEncoder.encode(request.getPassword()), Role.USER);
 
         userRepository.save(user);
 
